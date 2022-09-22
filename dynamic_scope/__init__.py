@@ -15,7 +15,8 @@ class DynamicScope(abc.Mapping):
         return self.env[key]
     
     def __setitem__(self, key: str, value: Optional[Any]):
-        self.env[key] = value
+        if not self.env.__contains__(key):
+            self.env[key] = value
 
     def __iter__(self) -> Iterator[str]:
         return self.env.__iter__()
@@ -25,4 +26,13 @@ class DynamicScope(abc.Mapping):
 
 
 def get_dynamic_re() -> DynamicScope:
-    return DynamicScope()
+    dyn_scope = DynamicScope()
+    stack = inspect.stack()
+    for frame_info in stack[1::]:
+        frame = frame_info.frame
+        free_vars = list(frame.f_code.co_freevars)
+        local_vars =  {key: value for (key, value) in frame.f_locals.items() if not free_vars.__contains__(key)}
+        for var_name, var_value in local_vars.items():
+            dyn_scope[var_name] = var_value
+
+    return 
