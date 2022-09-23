@@ -1,8 +1,9 @@
 import inspect
-from ast import Raise
 from collections import abc
-from types import FunctionType
 from typing import Any, Dict, Iterator, Optional
+
+# Nick Lay
+# Credit: Our Hours Special Dynamo Session - 9/22/22
 
 
 class DynamicScope(abc.Mapping):
@@ -34,7 +35,6 @@ def get_dynamic_re() -> DynamicScope:
     for frame_info in stack[1::]:
         frame = frame_info.frame
         free_vars = list(frame.f_code.co_freevars)
-        all_vars = frame.f_code.co_cellvars+frame.f_code.co_varnames
 
         local_vars = {key: value for (
             key, value) in frame.f_locals.items() if key not in free_vars}
@@ -43,6 +43,9 @@ def get_dynamic_re() -> DynamicScope:
 
         # No local variables in frame, but some variables exist
         # Therefore, we have unbound variables for this scope
+        # Set as '__unbound__' as an indicator value for this condition
+        # This allows NoneTypes to work
+        all_vars = frame.f_code.co_cellvars+frame.f_code.co_varnames
         if not len(frame.f_locals) and len(all_vars):
             for var in all_vars:
                 dyn_scope[var] = '__unbound__'
